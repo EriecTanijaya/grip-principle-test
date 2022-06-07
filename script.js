@@ -21,11 +21,12 @@ var questionsAnswers = [
         a:["Brief and to the point", "friendly and warm"]
     }
 ];
-var soalIndex = 0;
+var soalIndex = -1;
+var questionProgress = -1;
 
 function init() {
     shuffle(questionsAnswers);
-    showQuestion();
+    update();
 }
 
 function getAnswer(val) {
@@ -34,59 +35,67 @@ function getAnswer(val) {
         questionIndex: val.id
     }
     answersSubmitted.push(answer);
+    update();
+}
 
-    clearQuestion();
+function reset() {
+    soalIndex = -1;
+    answersSubmitted.length = 0;
+    questionProgress = -1;
+}
+
+function clearElement(name) {
+    var target = document.getElementById(name);
+    target.remove();
+}
+
+function update() {
+    questionProgress++;
+    soalIndex++;
+
+    // progress bar
+    var percentageValue = Math.round((questionProgress / questionsAnswers.length) * 100);
+    var progress = document.getElementById("progress");
+    progress.innerHTML = `<label id="progress-label">` + percentageValue + `%` + `</label>\n`;
+    progress.innerHTML += `<progress id="progress-data" value="` + percentageValue +`" max="100">` + percentageValue + `</progress>`;
+
     
-    if (soalIndex == questionsAnswers.length - 1) {
-        showResult();
-        soalIndex = 0;
-        answersSubmitted.length = 0;
+    // info
+    var info = document.getElementById("info");
+    info.innerHTML = `<p> ` + questionProgress + ` of ` + questionsAnswers.length + ` questions completed</p>`;
+    
+    // main section
+    var mainSection = document.getElementById("questions");
+
+    //check is it final answer?
+    if (soalIndex == questionsAnswers.length) {
+        var result = `<p> your answers: </p>`;
+        result += `<ol> \n`;
+    
+        for (let i = 0; i < answersSubmitted.length; i++) {
+            var answerIndex = answersSubmitted[i].index;
+    
+            var master = questionsAnswers[answersSubmitted[i].questionIndex]
+    
+            var question = master.q;
+            var answer = master.a[answerIndex];
+    
+            result += `<li>` + question + `: ` + answer + `</li>`;
+        }
+    
+        result += `\n </ol>`;
+
+        mainSection.innerHTML = result;
+        
+        reset();
     } else {
-        soalIndex++;
-        showQuestion();
+        mainSection.innerHTML = `<p>${questionsAnswers[soalIndex].q}</p>\n`;
+
+        var choices = questionsAnswers[soalIndex].a;
+        for (let i = 0; i < choices.length; i++) {
+            mainSection.innerHTML += `<button type="button" onclick="getAnswer(this)" value="` + i + `" id="` + soalIndex + `">` + choices[i] +`</button>\n`;
+        }
     }
-}
-
-function showResult() {
-    var result = `<p> your answers: </p>`;
-    result += `<ol> \n`;
-
-    for (let i = 0; i < answersSubmitted.length; i++) {
-        var answerIndex = answersSubmitted[i].index;
-
-        var master = questionsAnswers[answersSubmitted[i].questionIndex]
-
-        var question = master.q;
-        var answer = master.a[answerIndex];
-
-        result += `<li>` + question + `: ` + answer + `</li>`;
-    }
-
-    result += `\n </ol>`;
-
-    document.getElementById("questions").innerHTML = result;
-}
-
-function clearQuestion() {
-    var choice = document.getElementById("choices");
-    choice.remove();
-}
-
-function showQuestion() {
-    document.getElementById("questions").innerHTML = `<p>${questionsAnswers[soalIndex].q}</p>`;
-
-    var choicesDiv = document.createElement("div");
-    choicesDiv.id = "choices";
-
-    var choices = questionsAnswers[soalIndex].a;
-
-    var choicesHTML = "";
-    for (let i = 0; i < choices.length; i++) {
-        choicesHTML += `<button type="button" onclick="getAnswer(this)" value="` + i + `" id="` + soalIndex + `">` + choices[i] +`</button>\n`;
-    }
-
-    choicesDiv.innerHTML += choicesHTML;
-    document.body.appendChild(choicesDiv);
 }
 
 function shuffle(array) {
